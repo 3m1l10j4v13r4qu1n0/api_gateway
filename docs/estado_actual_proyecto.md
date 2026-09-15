@@ -1,6 +1,6 @@
 # Estado Actual del Proyecto
 
-> Última actualización: 2026-09-15
+> Última actualización: 2026-09-15 (Fase 3: Docker Compose completa)
 > Este archivo es una FOTO del presente, no un historial. Para el historial de cambios ver `vitacora_agentica.md`.
 > El agente debe leer este archivo completo al iniciar cualquier tarea sobre el proyecto.
 
@@ -47,20 +47,32 @@ Leyenda: ✅ verificado | 🟡 parcial | ⏳ en proceso
 - Variables de entorno (`app/core/config.py`): `AUTH_SERVICE_URL`
   (default `http://localhost:8001`), `AFILIADOS_SERVICE_URL` (default
   `http://localhost:8002`), `DEBUG`, `CORS_ORIGINS`.
-- En Docker se inyectan los hostnames del docker-compose.
+- En Docker se inyectan los hostnames del docker-compose
+  (`http://auth_service:8001`, `http://afiliados_service:8002`).
 - Dependencias: `app/requirements.txt` (fastapi, uvicorn, httpx, pydantic-settings) +
   `app/requirements-dev.txt` (pytest, pytest-asyncio, ruff, black).
 - Tests con `httpx.MockTransport` (sin servicios reales): 12 casos (ruteo, passthrough
   de headers, status/body de errores de negocio, 502/504).
+- **Docker Compose (Fase 3)**: `docker/docker-compose.yml` — 4 servicios
+  (postgres:16-alpine, auth_service, afiliados_service, api_gateway). Postgres compartido,
+  `docker/init-db.sh` crea `auth_db` y `afiliados_db` en el primer arranque.
+- Los microservicios se montan como **submódulos git** anclados a `main`:
+  `docker/auth_service` → `api_usuario-roles`, `docker/afiliados_service` →
+  `api_normalizacion_afiliados`. Cada hermano tiene su propio `Dockerfile` +
+  `docker-entrypoint.sh` (espera DB → `alembic upgrade head` → seed → uvicorn).
+- Dockerfile del gateway en `docker/gateway/Dockerfile` (context `..`, imagen
+  python:3.13-slim + uvicorn en :8000).
 
 ## 7. Pendientes / TODO conocidos
 
 - [x] Código de la gateway (Fase 2): core, infraestructura, presentación, main.
 - [x] `app/requirements.txt`, `pyproject.toml`, `.env.example`, `.env`.
 - [x] Tests con `httpx.MockTransport` (12 verdes).
-- [ ] Verificación end-to-end con los microservicios reales levantados.
-- [ ] Docker Compose (Fase 3).
+- [x] Docker Compose (Fase 3): 4 servicios healthy + end-to-end por `:8000` verificado.
 - [x] Confirmar nombre del repo: `api_gateway`.
+- [ ] Endpoints de `/sync/*` con credenciales reales de Google Sheets dentro del compose
+      (requiere proveer `GOOGLE_CREDENTIALS_PATH`/`GOOGLE_SHEETS_ID` en el entorno).
+- [ ] Release a `main` del gateway (hoy el trabajo vive en `develop`).
 
 ## 8. Decisiones y convenciones vigentes
 

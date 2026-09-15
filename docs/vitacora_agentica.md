@@ -88,3 +88,43 @@ skill `proxy-gateway` y los patrones de `api_normalizacion_afiliados`.
 `pytest` (12 passed). Smoke test real: health OK, dashboard muestra 5 servicios/estado,
 proxy a servicio caído devuelve 502. Verificación end-to-end con microservicios reales
 todavía pendiente (no estaban corriendo). Sigue Fase 3 (Docker Compose).
+
+---
+
+## 2026-09-15 — Fase 3: Docker Compose del ecosistema
+
+**Qué se hizo:** se orquestó el ecosistema completo en contenedores (postgres + auth_service +
+afiliados_service + api_gateway) desde `docker/`, usando los microservicios como **submódulos git**
+anclados a `main`.
+
+**Decisiones de arquitectura:**
+- **Submódulos** en vez de copias: `docker/auth_service` → `api_usuario-roles`, `docker/afiliados_service`
+  → `api_normalizacion_afiliados`, ambos con `branch = main` en `.gitmodules`.
+  Fueron anclados al `main` remoto post-contenedorización (SHA `0022860` y `6defbff`).
+- **Dockerfiles en cada repo hermano** (no en la gateway): cada microservicio ganó `Dockerfile` +
+  `docker-entrypoint.sh` + `.dockerignore` en su propio repo (flujo feature → develop → main, pusheados
+  a origin con OK del usuario).
+- **Entrypoint único** en cada microservicio: espera a la DB (loop hasta 30×2s), `alembic upgrade head`,
+  `python -m app.infrastructure.database.seed_runner` y luego `uvicorn` (8001 auth / 8002 afiliados).
+- **Un solo Postgres compartido** (`postgres:16-alpine`) con `docker/init-db.sh` montado en
+  `/docker-entrypoint-initdb.d/` que crea `auth_db` y `afiliados_db`. No se publica el 5432 al host
+  (los servicios se hablan por la red interna; el 5432 local estaba ocupado).
+- **Dockerfile del gateway** en `docker/gateway/Dockerfile` con build context `..` (raíz del repo,
+  copia `app/` nada más). `.dockerignore` en raíz excluye venv, docs, tests y los submódulos.
+- **URLs por hostname** inyectadas al gateway: `AUTH_SERVICE_URL=http://auth_service:8001`,
+  `AFILIADOS_SERVICE_URL=http://afiliados_service:8002`. Healthchecks por servicio:
+  postgres con `pg_isready`, los tres FastAPI con `urlopen` al `/`.
+- `docker compose down` al final (sin borrar el volumen `postgres_data`).
+
+**Archivos/módulos tocados:**
+- `docker/docker-compose.yml` — 4 servicios, healthchecks, dependencias con `condition: service_healthy`
+- `docker/gateway/Dockerfile` — imagen del gateway (python:3.13-slim + uvicorn)
+- `docker/init-db.sh` — crea `auth_db` y `afiliados_db`
+- `.gitmodules` + `docker/auth_service/` + `docker/afiliados_service/` — submódulos
+- `.dockerignore` — context de build del gateway
+- Repos hermanos: `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` (feature → develop → main)
+
+**Estado resultante:** Fase 3 completa. `docker compose up -d --build` → 4 contenedores
+healthy. End-to-end verificado por `http://localhost:8000`: registro de usuario → login → `/auth/me`
+→ crear afiliado → listar → PATCH (200). El 500 inicial de afiliados fue por payload incompleto
+(`numero_legajo` NOT NULL), no por la gateway. Verificación y `docker compose down` OK.

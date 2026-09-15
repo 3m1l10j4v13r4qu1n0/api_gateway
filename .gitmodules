@@ -1,0 +1,8 @@
+[submodule "docker/auth_service"]
+	path = docker/auth_service
+	url = https://github.com/3m1l10j4v13r4qu1n0/api_usuario-roles.git
+	branch = main
+[submodule "docker/afiliados_service"]
+	path = docker/afiliados_service
+	url = https://github.com/3m1l10j4v13r4qu1n0/api_normalizacion_afiliados.git
+	branch = main
