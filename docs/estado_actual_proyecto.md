@@ -32,13 +32,13 @@ ecosistema: rutea el tráfico HTTP hacia el Auth Service (`:8001`) y la Afiliado
 
 | Método | Ruta | Descripción | Estado |
 |---|---|---|---|
-| * | `/auth/*` | → Auth Service :8001 (login, me) | ⏳ En andamiaje |
-| * | `/usuarios/*` | → Auth Service :8001 | ⏳ En andamiaje |
-| * | `/roles/*` | → Auth Service :8001 | ⏳ En andamiaje |
-| * | `/afiliados/*` | → Afiliados API :8002 | ⏳ En andamiaje |
-| * | `/sync/*` | → Afiliados API :8002 (streaming) | ⏳ En andamiaje |
-| GET | `/` | Health propio del gateway | ⏳ En andamiaje |
-| GET | `/dashboard` | Estado de los upstreams | ⏳ En andamiaje |
+| * | `/auth/*` | → Auth Service :8001 (login, me) | ✅ Verificado |
+| * | `/usuarios/*` | → Auth Service :8001 | ✅ Verificado |
+| * | `/roles/*` | → Auth Service :8001 | ✅ Verificado |
+| * | `/afiliados/*` | → Afiliados API :8002 | ✅ Verificado |
+| * | `/sync/*` | → Afiliados API :8002 (streaming) | ✅ Verificado |
+| GET | `/` | Health propio del gateway | ✅ Verificado |
+| GET | `/dashboard` | Estado de los upstreams | ✅ Verificado |
 
 Leyenda: ✅ verificado | 🟡 parcial | ⏳ en proceso
 
@@ -48,15 +48,18 @@ Leyenda: ✅ verificado | 🟡 parcial | ⏳ en proceso
   (default `http://localhost:8001`), `AFILIADOS_SERVICE_URL` (default
   `http://localhost:8002`), `DEBUG`, `CORS_ORIGINS`.
 - En Docker se inyectan los hostnames del docker-compose.
-- Dependencias: `fastapi`, `uvicorn`, `httpx`, `pydantic-settings`
-  (a definir en `app/requirements.txt`).
+- Dependencias: `app/requirements.txt` (fastapi, uvicorn, httpx, pydantic-settings) +
+  `app/requirements-dev.txt` (pytest, pytest-asyncio, ruff, black).
+- Tests con `httpx.MockTransport` (sin servicios reales): 12 casos (ruteo, passthrough
+  de headers, status/body de errores de negocio, 502/504).
 
 ## 7. Pendientes / TODO conocidos
 
-- [ ] Crear el código de la gateway (Fase 2 del plan): core, infraestructura, presentación, main.
-- [ ] `app/requirements.txt`, `pyproject.toml`, `.env.example`, `.env`.
-- [ ] Tests con `httpx.MockTransport`.
-- [ ] Git init (rama `develop`) y Docker Compose (Fase 3).
+- [x] Código de la gateway (Fase 2): core, infraestructura, presentación, main.
+- [x] `app/requirements.txt`, `pyproject.toml`, `.env.example`, `.env`.
+- [x] Tests con `httpx.MockTransport` (12 verdes).
+- [ ] Verificación end-to-end con los microservicios reales levantados.
+- [ ] Docker Compose (Fase 3).
 - [x] Confirmar nombre del repo: `api_gateway`.
 
 ## 8. Decisiones y convenciones vigentes

@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F841"]
+".agents/*" = ["I001", "B008", "PIE790"]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+extend-exclude = "(\\.agents/|\\.claude/)"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

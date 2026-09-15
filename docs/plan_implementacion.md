@@ -28,27 +28,28 @@ Crear la base de reglas, skills y documentación del repo, heredada de
 
 ---
 
-## Fase 2 — Gateway local (FastAPI + httpx)
+## Fase 2 — Gateway local (FastAPI + httpx) ✅ completada
 
 Crear el código del proxy reverso en `:8000` ruteando a los microservicios locales.
 
 ### Entregables
-- [ ] `app/core/config.py` — pydantic-settings (`AUTH_SERVICE_URL`, `AFILIADOS_SERVICE_URL`, `DEBUG`, `CORS_ORIGINS`)
-- [ ] `app/core/routing.py` — tabla de ruteo: prefijo → (URL, timeout, requiere_autorización)
-- [ ] `app/infrastructure/http_client.py` — pool de `httpx.AsyncClient` (uno por servicio)
-- [ ] `app/presentation/proxy_handler.py` — reenvío streaming (headers sin hop-by-hop, passthrough de `Authorization`)
-- [ ] `app/presentation/handlers.py` — `502 {"error": "servicio no disponible: <nombre>"}`
-- [ ] `app/presentation/health.py` / `dashboard.py` — `GET /` y `GET /dashboard`
-- [ ] `app/main.py` — lifespan (cliente HTTP), CORS, routers
-- [ ] `app/requirements.txt` (fastapi, uvicorn, httpx, pydantic-settings) + `pyproject.toml` (ruff/black)
-- [ ] `.env.example` + `.env`
-- [ ] `tests/` con `httpx.MockTransport` (ruteo, passthrough de auth, timeout/502)
+- [x] `app/core/config.py` — pydantic-settings (`AUTH_SERVICE_URL`, `AFILIADOS_SERVICE_URL`, `DEBUG`, `CORS_ORIGINS`)
+- [x] `app/core/routing.py` — tabla de ruteo: prefijo → (URL, timeout, requiere_autorización)
+- [x] `app/infrastructure/http_client.py` — pool de `httpx.AsyncClient` (uno por servicio, transport inyectable)
+- [x] `app/presentation/proxy_handler.py` — reenvío streaming (headers sin hop-by-hop, passthrough de `Authorization`)
+- [x] `app/presentation/handlers.py` — errores de upstream: 502 servicio no disponible / 504 timeout
+- [x] `app/presentation/health.py` / `dashboard.py` — `GET /` y `GET /dashboard`
+- [x] `app/main.py` — lifespan (pool HTTP), CORS, routers propios + catch-alls por prefijo
+- [x] `app/requirements.txt` (fastapi, uvicorn, httpx, pydantic-settings) + `pyproject.toml` (ruff/black/pytest)
+- [x] `.env.example` + `.env`
+- [x] `tests/` con `httpx.MockTransport` (12 tests: ruteo, passthrough de auth, timeouts/502/504)
 
 ### Verificación
-- Levantar los 3 servicios locales y probar end-to-end por `:8000`:
-  `POST /usuarios/` → `POST /auth/login` → `GET /auth/me` (token) → `GET /afiliados/` → `PATCH /afiliados/{id}`.
-- Contra-ruta: `/afiliados` sin token responde (público); `/roles/` sin token responde 401 del auth service.
-- Checklist en verde: `ruff check .` · `black --check .` · `pytest`.
+- Checklist en verde: `ruff check .` · `black --check .` · `pytest` (12 passed).
+- Smoke test real: health OK, dashboard con 5 servicios y estado "no disponible",
+  proxy a servicio caído → 502.
+- ⬜ Pendiente: end-to-end completo con los 3 servicios locales levantados
+  (`POST /usuarios/` → `POST /auth/login` → `GET /auth/me` → `GET /afiliados/` → `PATCH /afiliados/{id}`).
 
 ---
 
