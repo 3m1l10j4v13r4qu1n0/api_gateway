@@ -128,3 +128,41 @@ anclados a `main`.
 healthy. End-to-end verificado por `http://localhost:8000`: registro de usuario → login → `/auth/me`
 → crear afiliado → listar → PATCH (200). El 500 inicial de afiliados fue por payload incompleto
 (`numero_legajo` NOT NULL), no por la gateway. Verificación y `docker compose down` OK.
+
+---
+
+## 2026-09-15 — /sync/* con credenciales reales de Google dentro del compose
+
+**Qué se hizo:** se configuró el compose para que `afiliados_service` pueda conectarse a Google
+Sheets con credenciales reales y se probaron los tres endpoints de `/sync` por el gateway `:8000`.
+
+**Decisiones de arquitectura:**
+- **Bind-mount read-only** del service account en `docker/docker-compose.yml`
+  (`${GOOGLE_CREDENTIALS_HOST_PATH}:/app/.credentials/service_account.json:ro`). El path de
+  credenciales dentro del contenedor es relativo al `WORKDIR /app`
+  (`.credentials/service_account.json`), consistente con el `.env` local del repo hermano.
+- Los valores reales (`GOOGLE_SHEETS_ID`, `GOOGLE_CREDENTIALS_HOST_PATH`,
+  `GOOGLE_CREDENTIALS_PATH`) viven solo en `.env` de la raíz (gitignored). `docker/.env` es un
+  **symlink a `../.env`** para que `docker compose` resuelva las variables del proyecto.
+- `.env.example` documenta las 3 variables sin valores reales.
+
+**Archivos/módulos tocados:**
+- `docker/docker-compose.yml` — bloque `volumes` en `afiliados_service` (bind-mount read-only)
+- `.env` — `GOOGLE_SHEETS_ID`, `GOOGLE_CREDENTIALS_HOST_PATH`, `GOOGLE_CREDENTIALS_PATH`
+- `.env.example` — las 3 variables de ejemplo
+- `docker/.env` — symlink → `../.env`
+- `app/core/config.py` — `model_config` con `extra="ignore"` (pydantic-settings v2.12 rechaza por
+  defecto las variables `GOOGLE_*` del `.env` que no son campos del `Settings` de la gateway;
+  el boot local y `pytest` fallaban con `extra_forbidden`)
+- `docs/estado_actual_proyecto.md` — pendiente de `/sync/*` marcado como verificado
+
+**Estado resultante:** verificado end-to-end por `http://localhost:8000` (4 servicios healthy):
+- `POST /sync/sheets/import` → `201` · 39 procesados, 36 válidos, 3 errores de email
+  (`nodato@nodato`, dos mails sin `@`), consistente con la auditoría previa (36 importados).
+- `POST /sync/sheets/export` → `200` · 37 registros exportados a la hoja de exportación.
+- `POST /sync/sheets/reimport` → `201` · las 3 filas de la hoja "Pendientes de corrección" se
+  reimportan y siguen fallando por los mismos 3 emails inválidos (HU-06 correcto: quedan las filas
+  que siguen fallando).
+- Afiliados persistidos en `afiliados_db` del compose (`GET /afiliados/` devuelve los 36 válidos)
+  y dashboard del gateway con `/sync` → `ok`. Checklist en verde: `ruff check .` · `black --check .`
+  · `pytest` (12 passed). Imagen del gateway reconstruida con el cambio de `config.py`.
