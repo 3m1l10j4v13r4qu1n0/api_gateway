@@ -53,3 +53,38 @@ actualizaron las referencias en AGENTS.md, skills y docs.
 
 **Estado resultante:** API Gateway con nombre definitivo `api_gateway`; pendientes: Fase 2
 (código de la gateway), git init con `develop`, Fase 3 (Docker Compose).
+
+---
+
+## 2026-09-15 — Fase 2: gateway local FastAPI + httpx
+
+**Qué se hizo:** se implementó el código del API Gateway (proxy reverso) siguiendo el
+skill `proxy-gateway` y los patrones de `api_normalizacion_afiliados`.
+
+**Decisiones de arquitectura:**
+- Ruteo data-driven en `app/core/routing.py` (prefijo → Route) con `find_route()`; sin
+  `if/elif` de paths. 5 prefijos activos.
+- Clientes `httpx.AsyncClient` en un pool (`HttpClientPool`) creado en el lifespan y
+  cerrado al apagar; `register()` acepta transport inyectable para tests con
+  `httpx.MockTransport`.
+- Proxy streaming: headers sin hop-by-hop (host, connection, content-length, etc.),
+  reenvío de `Authorization` y headers custom, body por iterador de bytes, y el
+  status/headers/body del upstream se devuelven tal cual (passthrough de errores de negocio).
+- Errores de upstream: 502 `servicio no disponible` (ConnectError) y 504 `timeout` — ambos
+  en la única capa de error (proxy_handler).
+- `CORS_ORIGINS` como lista JSON para pydantic-settings v2. `model_config =
+  SettingsConfigDict(...)` moderno (evita deprecación de `class Config`).
+
+**Archivos/módulos tocados:**
+- `app/core/config.py`, `app/core/routing.py` — config y tabla de ruteo
+- `app/infrastructure/http_client.py` — pool de clientes
+- `app/presentation/proxy_handler.py`, `handlers.py`, `health.py`, `dashboard.py`
+- `app/main.py` — lifespan, CORS, routers propios + catch-alls por prefijo
+- `app/requirements.txt`, `app/requirements-dev.txt`, `pyproject.toml`
+- `.env.example`, `.env`
+- `tests/` — conftest, helpers, mock_upstreams, test_gateway (12 tests)
+
+**Estado resultante:** Fase 2 completa. Checklist en verde: `ruff check .`, `black --check .`,
+`pytest` (12 passed). Smoke test real: health OK, dashboard muestra 5 servicios/estado,
+proxy a servicio caído devuelve 502. Verificación end-to-end con microservicios reales
+todavía pendiente (no estaban corriendo). Sigue Fase 3 (Docker Compose).
