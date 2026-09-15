@@ -53,21 +53,26 @@ Crear el código del proxy reverso en `:8000` ruteando a los microservicios loca
 
 ---
 
-## Fase 3 — Docker Compose
+## Fase 3 — Docker Compose ✅ completada
 
 Orquestar gateway + auth + afiliados + PostgreSQL desde `docker/`.
 
 ### Entregables
-- [ ] `docker/docker-compose.yml` — 4 servicios (postgres, auth_service, afiliados_service, api_gateway)
-- [ ] Dockerfiles por servicio (instalación desde `app/requirements.txt`, `alembic upgrade head` + seed)
-- [ ] `docker/init-db.sh` — crear `auth_db` y `afiliados_db` en un solo Postgres
-- [ ] Códigos de los microservicios copiados a `docker/auth_service/` y `docker/afiliados_service/`
-- [ ] Healthchecks por servicio; URLs por hostname de red (`http://auth_service:8001`, `http://afiliados_service:8002`)
+- [x] `docker/docker-compose.yml` — 4 servicios (postgres, auth_service, afiliados_service, api_gateway)
+- [x] Dockerfiles por servicio — en cada repo hermano (`Dockerfile` + `docker-entrypoint.sh`:
+      espera DB → `alembic upgrade head` → seed → uvicorn) y `docker/gateway/Dockerfile`
+- [x] `docker/init-db.sh` — crea `auth_db` y `afiliados_db` en un solo Postgres
+- [x] Microservicios como **submódulos git** anclados a `main` en `docker/auth_service/` y `docker/afiliados_service/`
+- [x] Healthchecks por servicio; URLs por hostname de red (`http://auth_service:8001`, `http://afiliados_service:8002`)
 
 ### Verificación
-- `docker compose up -d --build` → contenedores healthy.
-- Repetir el flujo end-to-end por `http://localhost:8000`.
-- `docker compose down`.
+- `docker compose up -d --build` → 4 contenedores healthy. ✅
+- Flujo end-to-end por `http://localhost:8000`: registro → login → `/auth/me` → crear/listar/PATCH afiliado. ✅
+- `docker compose down`. ✅
+
+### Notas
+- Los repos hermanos fueron tocados (Dockerfile/entrypoint) y pusheados a `main` con OK del usuario.
+- El puerto 5432 no se publica al host (queda interno; el local estaba ocupado).
 
 ---
 
@@ -76,5 +81,5 @@ Orquestar gateway + auth + afiliados + PostgreSQL desde `docker/`.
 | # | Pregunta | Estado |
 |---|---|---|
 | 1 | Nombre del repo: `api_gateway` | ✅ Resuelto |
-| 2 | ¿Git init con `main` + `develop` como los hermanos? | ⏳ Por confirmar |
-| 3 | ¿Copiar los microservicios a `docker/` o usar submódulos? | ⏳ Fase 3 |
+| 2 | ¿Git init con `main` + `develop` como los hermanos? | ✅ Resuelto (en uso: `develop` + ramas feature) |
+| 3 | ¿Copiar los microservicios a `docker/` o usar submódulos? | ✅ Resuelto: submódulos anclados a `main` |
