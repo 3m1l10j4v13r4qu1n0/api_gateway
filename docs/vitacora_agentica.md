@@ -166,3 +166,33 @@ Sheets con credenciales reales y se probaron los tres endpoints de `/sync` por e
 - Afiliados persistidos en `afiliados_db` del compose (`GET /afiliados/` devuelve los 36 válidos)
   y dashboard del gateway con `/sync` → `ok`. Checklist en verde: `ruff check .` · `black --check .`
   · `pytest` (12 passed). Imagen del gateway reconstruida con el cambio de `config.py`.
+
+---
+
+## 2026-09-15 — README + merge a develop y push de rama y tags
+
+**Qué se hizo:** se creó el `README.md` del proyecto en la raíz (no existía) y se cerró el
+ciclo de la feature `sync-compose-credenciales-reales`: merge a `develop`, push de `develop`,
+push de los tags acumulados y borrado de la rama feature.
+
+**Decisiones de arquitectura:**
+- **README siguiendo la convención de los repos hermanos** (`api_usuario-roles`,
+  `api_normalizacion_afiliados`): descripción general con diagrama Frontend → gateway →
+  microservicios, objetivos, documentación, funcionalidades, rutas expuestas (tabla con
+  timeout y requiere_auth), estructura del proyecto por capas, instalación local + Docker
+  Compose, Google Sheets para `/sync` (bind-mount read-only), testing, estado y roadmap.
+- **Merge fast-forward** (`--ff-only`) porque `develop` no avanzó mientras la feature vivió;
+  sin commit de merge extra.
+- Tags pusheados como operaciones separadas: `v1.0.0`, `v1.1.0` (que estaban solo en local)
+  y `v1.1.1` (corrección de `/sync`).
+
+**Archivos/módulos tocados:**
+- `README.md` — nuevo (293 líneas)
+- `docs/estado_actual_proyecto.md` — se menciona el README y los tags de fase
+- Git: merge `feature/sync-compose-credenciales-reales` → `develop` (fast-forward),
+  `git push origin develop`, `git push origin v1.0.0 v1.1.0 v1.1.1`,
+  `git branch -d feature/sync-compose-credenciales-reales`
+
+**Estado resultante:** `develop` = `db232d6`, sincronizado con `origin/develop`. Tags en
+`origin`: `v1.0.0`, `v1.1.0`, `v1.1.1`. Working tree limpio. Checklist en verde
+(`ruff` · `black` · `pytest` 12 passed). Pendiente: release `develop → main` del gateway.

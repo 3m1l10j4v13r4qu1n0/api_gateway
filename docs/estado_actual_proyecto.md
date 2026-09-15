@@ -1,6 +1,6 @@
 # Estado Actual del Proyecto
 
-> Última actualización: 2026-09-15 (Fase 3 + /sync/* con credenciales reales en compose)
+> Última actualización: 2026-09-15 (Fase 3 + /sync/* + README + tags)
 > Este archivo es una FOTO del presente, no un historial. Para el historial de cambios ver `vitacora_agentica.md`.
 > El agente debe leer este archivo completo al iniciar cualquier tarea sobre el proyecto.
 
@@ -67,6 +67,8 @@ Leyenda: ✅ verificado | 🟡 parcial | ⏳ en proceso
   es un symlink a `../.env`). El `.env.example` documenta las 3 variables.
 - Dockerfile del gateway en `docker/gateway/Dockerfile` (context `..`, imagen
   python:3.13-slim + uvicorn en :8000).
+- `README.md` en la raíz: descripción del proyecto, arquitectura, rutas, instalación local
+  + Docker Compose, Google Sheets (`/sync`), testing, estado y roadmap.
 
 ## 7. Pendientes / TODO conocidos
 
@@ -91,3 +93,5 @@ Leyenda: ✅ verificado | 🟡 parcial | ⏳ en proceso
 - La fuente de verdad de los contratos son los repos de los microservicios
   (`api_usuario-roles`, `api_normalizacion_afiliados`).
 - Reglas y skills heredados y adaptados desde `api_normalizacion_afiliados`.
+- Tags de fase: `v1.0.0` (Fase 2), `v1.1.0` (Fase 3), `v1.1.1` (corrección: `/sync/*` con
+  credenciales reales). Todos pusheados a `origin`. Release a `main` pendiente.
