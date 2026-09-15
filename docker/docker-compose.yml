@@ -57,6 +57,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - ${GOOGLE_CREDENTIALS_HOST_PATH}:/app/.credentials/service_account.json:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,urllib.error; urllib.request.urlopen('http://localhost:8002/')"]
       interval: 10s
